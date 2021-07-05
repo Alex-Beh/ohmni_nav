@@ -105,10 +105,11 @@ if __name__ == "__main__":
     with open(goals_json, "r") as f:
         goals_pose = json.load(f)
 
-    ## Else the goal might not read in order
-    print(goals_pose.keys())
+    ## Else the goal might not read in order    
     for i in goals_pose.keys():
-        print(type(i))
+        goals_pose[int(i)] = goals_pose[i]
+        del goals_pose[i]
+
     goals_pose = collections.OrderedDict(sorted(goals_pose.items()))
 
     for i in goals_pose:
