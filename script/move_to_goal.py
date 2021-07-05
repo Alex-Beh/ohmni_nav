@@ -10,7 +10,14 @@ import tf
 import math
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal, MoveBaseResult, MoveBaseFeedback
 from std_msgs.msg import String
+from geometry_msgs.msg import PoseArray, Pose
 
+import collections
+
+def Convert(a):
+    it = iter(a)
+    res_dct = dict(zip(it, it))
+    return res_dct
 
 class MoveBaseClient:
     def __init__(self):
@@ -66,6 +73,16 @@ class MoveBaseClient:
         goal.target_pose.pose.orientation.w = pose_2D["w"]
         return goal
 
+    @staticmethod
+    def create_waypoint(pose_2D):
+        """2d_pose = { "x": x, "y":y, "w": w }"""
+        waypoint = Pose()
+        waypoint.position.x = pose_2D["x"]
+        waypoint.position.y = pose_2D["y"]
+        waypoint.orientation.z = pose_2D["z"]
+        waypoint.orientation.w = pose_2D["w"]
+        return waypoint
+
 def goHomeCallback(goHomeFlag):
     print("!!!")
     if goHomeFlag.data == "True":
@@ -78,25 +95,41 @@ if __name__ == "__main__":
 
     # # initializes the action client node
     rospy.init_node('move_base_action_client')
-    client = MoveBaseClient()
 
     rospy.Subscriber("/go_home", String, goHomeCallback)
 
     goals_json = rospy.get_param('~goals_json', "/home/alex-beh/ros1_ws/HTX_ws/src/ohmni_nav/script/pose.json")
 
     #TODO: check path exists
-    
+    print("!!!")
     with open(goals_json, "r") as f:
         goals_pose = json.load(f)
 
     ## Else the goal might not read in order
-    goals_pose=sorted(goals_pose)
+    print(goals_pose.keys())
+    for i in goals_pose.keys():
+        print(type(i))
+    goals_pose = collections.OrderedDict(sorted(goals_pose.items()))
 
     for i in goals_pose:
         rospy.loginfo(i)
 
+    waypoint_pub = rospy.Publisher('waypoints', PoseArray, queue_size=10)
+    rospy.sleep(5.0)
+    waypoints = PoseArray()    
+    waypoints.header.frame_id = "map"
+    waypoints.header.stamp = rospy.Time.now()
+    for pose in goals_pose.values():
+        waypoint = MoveBaseClient.create_waypoint(pose)
+        waypoints.poses.append(waypoint)
+    # print(waypoints)
+    waypoint_pub.publish(waypoints)
+    print("!!!")
+
     # print(goals_pose)
     goals = [MoveBaseClient.create_2D_goal(pose) for pose in goals_pose.values()]    
+
+    client = MoveBaseClient()
 
     rospy.spin()
 
