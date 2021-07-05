@@ -34,9 +34,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCL
   <arg name="cmd_vel_topic" default="/tb_cmd_vel" />
   <arg name="odom_topic" default="/tb_control/wheel_odom" />
 
-  <!-- Run the map server --> 
-  <node name="map_server" pkg="map_server" type="map_server" args="$(find ohmni_nav)/maps/hopee_edit.yaml"/>
-
   <!--- Run AMCL --> 
   <include file="$(find ohmni_nav)/launch/amcl.launch" />
 
@@ -68,10 +65,17 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCL
     <remap from="odom" to="$(arg odom_topic)"/> 
   </node>
 
-  <arg name="pose_json" default="$(find ohmni_nav)/script/pose_home.json"/>
+  <!-- <arg name="pose_json" default="$(find ohmni_nav)/script/pose_home.json"/> -->
+  <!-- <arg name="pose_json" default="$(find ohmni_nav)/script/chart_demo_route2.json"/> -->
+  <arg name="pose_json" default="$(find ohmni_nav)/script/pose_home_level2.json"/>
 
   <node name="move_to_goal" pkg="ohmni_nav" type="move_to_goal.py" output="screen">
     <param name="goals_json" value="$(arg pose_json)"/>
   </node>
+
+
+  <!-- joystick script -->
+  <!--<node name="joystick_callback" pkg="ohmni_nav" type="joystick_callback.py" output="screen"/>
+  <node name="joy_node" pkg="joy" type="joy_node" output="screen"/>-->
 
 </launch>

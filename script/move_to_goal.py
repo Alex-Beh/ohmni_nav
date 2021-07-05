@@ -55,7 +55,6 @@ class MoveBaseClient:
     #     self.client.cancel_all_goals()
 
 
-class MoveBaseGoalCreator:
     @staticmethod
     def create_2D_goal(pose_2D):
         """2d_pose = { "x": x, "y":y, "w": w }"""
@@ -90,7 +89,7 @@ if __name__ == "__main__":
     with open(goals_json, "r") as f:
         goals_pose = json.load(f)
 
-    goals = [MoveBaseGoalCreator.create_2D_goal(pose) for pose in goals_pose.values()]    
+    goals = [MoveBaseClient.create_2D_goal(pose) for pose in goals_pose.values()]    
 
     rospy.spin()
 
