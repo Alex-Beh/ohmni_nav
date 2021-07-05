@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 
 <launch>
-  <arg name="pose_json" default="$(find ohmni_nav)/script/pose_ntu.json"/>
+  <arg name="pose_json" default="$(find ohmni_nav)/script/pose_hopelevel2.json"/>
 
-  <node name="map_server" pkg="map_server" type="map_server" args="$(find ohmni_nav)/maps/ntu_region_1_edited.yaml"/>
+  <node name="map_server" pkg="map_server" type="map_server" args="$(find ohmni_nav)/maps/hope_level2.yaml"/>
 
   <node name="move_to_goal" pkg="ohmni_nav" type="move_to_goal.py" output="screen">
     <param name="goals_json" value="$(arg pose_json)"/>

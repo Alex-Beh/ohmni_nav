@@ -9,15 +9,10 @@ from tf import TransformListener
 import tf
 import math
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal, MoveBaseResult, MoveBaseFeedback
-from std_msgs.msg import String
+from std_msgs.msg import String,Bool
 from geometry_msgs.msg import PoseArray, Pose
 
 import collections
-
-def Convert(a):
-    it = iter(a)
-    res_dct = dict(zip(it, it))
-    return res_dct
 
 class MoveBaseClient:
     def __init__(self):
@@ -87,16 +82,29 @@ def goHomeCallback(goHomeFlag):
     print("!!!")
     if goHomeFlag.data == "True":
         for goal in goals:
+            while(not next_goal):
+                print("pause at current waypoint")
+            print("Going next waypoint")
             client.send_goal(goal)
 
         print("Finish all the goals")
+
+def next_goal_callback(self,msg):
+    next_goal = msg.data
+
+def cancel_goal_callback(self,msg):
+    next_goal = False
+    client.cancel_goal()
 
 if __name__ == "__main__":
 
     # # initializes the action client node
     rospy.init_node('move_base_action_client')
 
+    next_goal = True
     rospy.Subscriber("/go_home", String, goHomeCallback)
+    rospy.Subscriber("/pause", Bool, next_goal_callback)
+    rospy.Subscriber("/cancel_goal", Bool, cancel_goal_callback)
 
     goals_json = rospy.get_param('~goals_json', "/home/alex-beh/ros1_ws/HTX_ws/src/ohmni_nav/script/pose.json")
 
@@ -136,4 +144,3 @@ if __name__ == "__main__":
 
     if rospy.is_shutdown():
         client.cancel_goal()
-    
