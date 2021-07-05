@@ -89,6 +89,13 @@ if __name__ == "__main__":
     with open(goals_json, "r") as f:
         goals_pose = json.load(f)
 
+    ## Else the goal might not read in order
+    goals_pose=sorted(goals_pose)
+
+    for i in goals_pose:
+        rospy.loginfo(i)
+
+    # print(goals_pose)
     goals = [MoveBaseClient.create_2D_goal(pose) for pose in goals_pose.values()]    
 
     rospy.spin()

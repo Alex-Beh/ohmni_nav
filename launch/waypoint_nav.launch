@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+
+<launch>
+  <arg name="pose_json" default="$(find ohmni_nav)/script/pose_home.json"/>
+
+  <node name="move_to_goal" pkg="ohmni_nav" type="move_to_goal.py" output="screen">
+    <param name="goals_json" value="$(arg pose_json)"/>
+  </node>
+</launch>
