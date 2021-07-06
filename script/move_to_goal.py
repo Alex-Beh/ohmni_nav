@@ -12,6 +12,9 @@ from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal, MoveBaseResult, Mov
 from std_msgs.msg import String,Bool
 from geometry_msgs.msg import PoseArray, Pose
 
+from dynamic_reconfigure.server import Server
+from ohmni_nav.cfg import WaypointNavigationConfig
+
 import collections
 
 class MoveBaseClient:
@@ -31,6 +34,8 @@ class MoveBaseClient:
         rospy.Subscriber("/go_home", String, self.goHomeCallback)
         rospy.Subscriber("/pause", Bool, self.next_goal_callback)
         rospy.Subscriber("/cancel_goal", Bool, self.cancel_goal_callback)
+
+        srv = Server(WaypointNavigationConfig, self.dynamic_reconfigure_callback)
 
     def send_goal(self, goal):
         self.client.send_goal(goal, done_cb=self.done_cb, feedback_cb=self.feedback_cb)
@@ -107,6 +112,15 @@ class MoveBaseClient:
     def cancel_goal_callback(self,msg):
         self.cancel_all_goal = True
         client.cancel_goal()
+    
+    def dynamic_reconfigure_callback(self,config,level):
+        print("-------------------")
+        print("trigger dynamic reconfigure")
+        print("pause_at_next_goal: {}".format(config.pause_at_next_goal))
+        print("cancel_all_goal: {}".format(config.cancel_all_goal))
+        self.next_goal = config.pause_at_next_goal
+        self.cancel_all_goal = config.cancel_all_goal
+        return config
 
 if __name__ == "__main__":
 
