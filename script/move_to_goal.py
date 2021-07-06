@@ -26,6 +26,12 @@ class MoveBaseClient:
         self.feedback_wait = 10   # wait n times before printing
         self.feedback_count = self.feedback_wait   # print first time then set to zero
 
+        self.next_goal = True
+        self.cancel_all_goal = False
+        rospy.Subscriber("/go_home", String, self.goHomeCallback)
+        rospy.Subscriber("/pause", Bool, self.next_goal_callback)
+        rospy.Subscriber("/cancel_goal", Bool, self.cancel_goal_callback)
+
     def send_goal(self, goal):
         self.client.send_goal(goal, done_cb=self.done_cb, feedback_cb=self.feedback_cb)
         # self.client.wait_for_result()
@@ -78,38 +84,38 @@ class MoveBaseClient:
         waypoint.orientation.w = pose_2D["w"]
         return waypoint
 
-def goHomeCallback(goHomeFlag):
-    print("!!!")
-    if goHomeFlag.data == "True":
-        for goal in goals:
-            while(not next_goal):
-                print("pause at current waypoint")
-            print("Going next waypoint")
-            client.send_goal(goal)
+    def goHomeCallback(self,goHomeFlag):
+        global client
+        print("!!!")
+        waypoint_pub.publish(waypoints)
+        if goHomeFlag.data == "True":
+            for goal in goals:
+                if self.cancel_all_goal:
+                    print("Cancel all goals")
+                    return
+                while(not self.next_goal):
+                    print("pause at current waypoint")
+                print("Going next waypoint")
+                client.send_goal(goal)
 
-        print("Finish all the goals")
+            print("Finish all the goals")
 
-def next_goal_callback(self,msg):
-    next_goal = msg.data
+    def next_goal_callback(self,msg):
+        self.next_goal = msg.data
+        print("\n\n\n\nnext_goal_callback {}".format(self.next_goal))
 
-def cancel_goal_callback(self,msg):
-    next_goal = False
-    client.cancel_goal()
+    def cancel_goal_callback(self,msg):
+        self.cancel_all_goal = True
+        client.cancel_goal()
 
 if __name__ == "__main__":
 
     # # initializes the action client node
     rospy.init_node('move_base_action_client')
 
-    next_goal = True
-    rospy.Subscriber("/go_home", String, goHomeCallback)
-    rospy.Subscriber("/pause", Bool, next_goal_callback)
-    rospy.Subscriber("/cancel_goal", Bool, cancel_goal_callback)
-
     goals_json = rospy.get_param('~goals_json', "/home/alex-beh/ros1_ws/HTX_ws/src/ohmni_nav/script/pose.json")
 
     #TODO: check path exists
-    print("!!!")
     with open(goals_json, "r") as f:
         goals_pose = json.load(f)
 
@@ -131,15 +137,13 @@ if __name__ == "__main__":
     for pose in goals_pose.values():
         waypoint = MoveBaseClient.create_waypoint(pose)
         waypoints.poses.append(waypoint)
-    # print(waypoints)
     waypoint_pub.publish(waypoints)
-    print("!!!")
 
     # print(goals_pose)
     goals = [MoveBaseClient.create_2D_goal(pose) for pose in goals_pose.values()]    
 
     client = MoveBaseClient()
-
+    print("!!!")
     rospy.spin()
 
     if rospy.is_shutdown():

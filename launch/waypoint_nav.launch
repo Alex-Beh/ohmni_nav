@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <launch>
-  <arg name="pose_json" default="$(find ohmni_nav)/script/pose_hopelevel2.json"/>
+  <arg name="pose_json" default="$(find ohmni_nav)/script/pose_hopelevel2_edited.json"/>
 
   <node name="map_server" pkg="map_server" type="map_server" args="$(find ohmni_nav)/maps/hope_level2.yaml"/>
 
