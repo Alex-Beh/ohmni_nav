@@ -95,10 +95,14 @@ class MoveBaseClient:
         print("!!!")
         waypoint_pub.publish(waypoints)
         if goHomeFlag.data == "True":
-            for goal in goals:
+            for i,goal in enumerate(goals):
+
                 if self.cancel_all_goal:
                     print("Cancel all goals")
                     return
+                if i == 7:
+                    print("settle down")
+                    time.sleep(3)
                 while(not self.next_goal):
                     print("pause at current waypoint")
                 print("Going next waypoint")
