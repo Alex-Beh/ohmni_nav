@@ -31,6 +31,7 @@ class MoveBaseClient:
 
         self.next_goal = True
         self.cancel_all_goal = False
+        self.go_home_pub = rospy.Publisher('/go_home', String, queue_size=10)
         rospy.Subscriber("/go_home", String, self.goHomeCallback)
         rospy.Subscriber("/pause", Bool, self.next_goal_callback)
         rospy.Subscriber("/cancel_goal", Bool, self.cancel_goal_callback)
@@ -120,6 +121,12 @@ class MoveBaseClient:
         print("cancel_all_goal: {}".format(config.cancel_all_goal))
         self.next_goal = config.pause_at_next_goal
         self.cancel_all_goal = config.cancel_all_goal
+
+        if config.trigger_all_waypoints:
+            print("Sending all goal ---> go home")
+            go_home_msg = String()
+            go_home_msg.data = "True"
+            self.go_home_pub.publish(go_home_msg)
         return config
 
 if __name__ == "__main__":
