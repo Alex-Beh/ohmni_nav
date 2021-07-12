@@ -1,8 +1,6 @@
 #! /usr/bin/env python
 import rospy
-import time
 import actionlib
-import sys
 import math
 import json
 from tf import TransformListener
@@ -21,7 +19,7 @@ class MoveBaseClient:
     def __init__(self):
         self.client = actionlib.SimpleActionClient('/move_base', MoveBaseAction)
         self.client.wait_for_server()
-        self.distance_tolerance = 1.5
+        self.distance_tolerance = 0.5
         self.odom_frame_id = 'map'
         self.base_frame_id = 'base_footprint'
         self.tf = TransformListener()
@@ -39,10 +37,11 @@ class MoveBaseClient:
         srv = Server(WaypointNavigationConfig, self.dynamic_reconfigure_callback)
 
     def send_goal(self, goal):
+        print("run")
         self.client.send_goal(goal, done_cb=self.done_cb, feedback_cb=self.feedback_cb)
         # self.client.wait_for_result()
         distance = 10
-        while(distance > self.distance_tolerance):
+        while((distance > self.distance_tolerance) or (self.client.get_state() == 2)):
             # now = rospy.Time()
             self.listener.waitForTransform(self.odom_frame_id, self.base_frame_id, rospy.Time(), rospy.Duration(4.0))
             trans,rot = self.listener.lookupTransform(self.odom_frame_id,self.base_frame_id, rospy.Time(0))
@@ -91,24 +90,27 @@ class MoveBaseClient:
         return waypoint
 
     def goHomeCallback(self,goHomeFlag):
-        global client
         print("!!!")
+        print(self.next_goal)
         waypoint_pub.publish(waypoints)
         if goHomeFlag.data == "True":
-            for i,goal in enumerate(goals):
+            done = False
+            while not done:
+                for i,goal in enumerate(goals):
+                    print("waypoint: {}".format(i))
+                    if self.cancel_all_goal:
+                        print("Cancel all goals")
+                        return
+                    if i == 8 or i == 9:
+                        print("settle down")
+                        rospy.sleep(3)
+                    while(not self.next_goal):
+                        print("pause at current waypoint")
+                    print("Going next waypoint")
+                    self.send_goal(goal)
 
-                if self.cancel_all_goal:
-                    print("Cancel all goals")
-                    return
-                if i == 7:
-                    print("settle down")
-                    time.sleep(3)
-                while(not self.next_goal):
-                    print("pause at current waypoint")
-                print("Going next waypoint")
-                client.send_goal(goal)
-
-            print("Finish all the goals")
+                print("Finish all the goals")
+                done = True
 
     def next_goal_callback(self,msg):
         self.next_goal = msg.data
@@ -116,13 +118,14 @@ class MoveBaseClient:
 
     def cancel_goal_callback(self,msg):
         self.cancel_all_goal = True
-        client.cancel_goal()
+        self.client.cancel_goal()
     
     def dynamic_reconfigure_callback(self,config,level):
         print("-------------------")
         print("trigger dynamic reconfigure")
         print("pause_at_next_goal: {}".format(config.pause_at_next_goal))
         print("cancel_all_goal: {}".format(config.cancel_all_goal))
+        print("trigger : {}".format(config.trigger_all_waypoints))
         self.next_goal = config.pause_at_next_goal
         self.cancel_all_goal = config.cancel_all_goal
 
